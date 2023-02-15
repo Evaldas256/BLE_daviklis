@@ -23,7 +23,6 @@
 #include <BLEServer.h>
 #include <BLEUtils.h>
 #include <BLE2902.h>
-
 #include <SPI.h>
 
 #include <TFT_eSPI.h> // Hardware-specific library
@@ -38,7 +37,6 @@ bool deviceConnected = false;
 bool oldDeviceConnected = false;
 uint32_t value = 0;
 bool screen_refresh= false;
-
 // See the following for generating UUIDs:
 // https://www.uuidgenerator.net/
 
@@ -60,13 +58,12 @@ class MyServerCallbacks: public BLEServerCallbacks {
 
 
 void setup() {
-    tft.init();
+      tft.init();
   tft.setRotation(2);
-  
   Serial.begin(115200);
 
   // Create the BLE Device
-  BLEDevice::init("ESP32");
+  BLEDevice::init("Nexus BLE1");
 
   // Create the BLE Server
   pServer = BLEDevice::createServer();
@@ -94,14 +91,13 @@ void setup() {
   // Start advertising
   BLEAdvertising *pAdvertising = BLEDevice::getAdvertising();
   pAdvertising->addServiceUUID(SERVICE_UUID);
-  pAdvertising->setScanResponse(false);
-  pAdvertising->setMinPreferred(0x0);  // set value to 0x00 to not advertise this parameter
+  pAdvertising->setScanResponse(true);
+  pAdvertising->setMinPreferred(0x1);  // set value to 0x00 to not advertise this parameter
   BLEDevice::startAdvertising();
   Serial.println("Waiting a client connection to notify...");
 }
 
 void loop() {
-
   if (deviceConnected) {
     if (screen_refresh==false)
     {
@@ -111,7 +107,7 @@ void loop() {
   // Set "cursor" at top left corner of display (0,0) and select font 2
   // (cursor will move to next line automatically during printing with 'tft.println'
   //  or stay on the line is there is room for the text with tft.print)
-  tft.setCursor(0, 0, 2);
+  tft.setCursor(0, 100, 2);
   // Set the font colour to be white with a black background, set text size multiplier to 1
   tft.setTextColor(TFT_WHITE,TFT_BLACK);  tft.setTextSize(1);
   // We can now plot text on screen using the "print" class
@@ -128,7 +124,7 @@ void loop() {
   // Set "cursor" at top left corner of display (0,0) and select font 2
   // (cursor will move to next line automatically during printing with 'tft.println'
   //  or stay on the line is there is room for the text with tft.print)
-  tft.setCursor(10, 0, 2);
+  tft.setCursor(0, 100, 2);
   // Set the font colour to be white with a black background, set text size multiplier to 1
   tft.setTextColor(TFT_WHITE,TFT_BLACK);  tft.setTextSize(1);
   // We can now plot text on screen using the "print" class
@@ -136,11 +132,18 @@ void loop() {
   }
   screen_refresh=true;
     }
+  value = random(0, 20);
+    // notify changed value
     if (deviceConnected) {
         pCharacteristic->setValue((uint8_t*)&value, 4);
         pCharacteristic->notify();
-        value++;
-        delay(10); // bluetooth stack will go into congestion, if too many packets are sent, in 6 hours test i was able to go as low as 3ms
+       // value++;
+         tft.setCursor(0, 120, 2);
+        // Set the font colour to be white with a black background, set text size multiplier to 1
+        tft.setTextColor(TFT_WHITE,TFT_BLACK);  tft.setTextSize(1);
+        // We can now plot text on screen using the "print" class
+        tft.println(value);
+        delay(1000); // bluetooth stack will go into congestion, if too many packets are sent, in 6 hours test i was able to go as low as 3ms
     }
     // disconnecting
     if (!deviceConnected && oldDeviceConnected) {
